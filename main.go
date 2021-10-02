@@ -6,23 +6,21 @@ import (
 	"Workflows/Workflows"
 )
 
-// TODO: state events, non-deterministic FSM (each state can take same inputs to different states)
+// TODO: state events, non-deterministic FSM (each state can take same inputs to different states),
 
 func main() {
-	alphabet := Workflows.NewAlphabet('a', 'b', 'c')
+	alphabet := Workflows.NewAlphabet('a', 'b')
 
 	stateA := Workflows.NewState("hello there")
 	stateB := Workflows.NewState("general kenobi!")
+	states := []Workflows.State{stateA, stateB}
 
-	fsm, err := Workflows.NewFSM(alphabet, []Workflows.State{stateA, stateB}, stateA, []Workflows.State{stateB})
-	if err != nil {
-		panic(err)
+	transitions := []Workflows.Transition{
+		Workflows.NewTransition(stateA, 'b', stateB),
+		Workflows.NewTransition(stateA, 'a', stateA),
 	}
-	err = fsm.AddTransition(stateA, 'b', stateB)
-	if err != nil {
-		panic(err)
-	}
-	err = fsm.AddTransition(stateA, 'a', stateA)
+
+	fsm, err := Workflows.NewFSM(alphabet, states, stateA, []Workflows.State{stateB}, transitions)
 	if err != nil {
 		panic(err)
 	}

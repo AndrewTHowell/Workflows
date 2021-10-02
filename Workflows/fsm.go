@@ -6,30 +6,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-func NewFSM(alphabet Alphabet, states []State, startState State, finalStates []State) (*fsm, error) {
-	fsmStates := make(map[State]struct{}, len(states))
-	for _, state := range states {
-		fsmStates[state] = struct{}{}
+func NewFSM(alphabet Alphabet, states []State, startState State, finalStates []State, transitions []Transition) (*fsm, error) {
+	fsm := &fsm{
+		alphabet: alphabet,
 	}
-	if _, ok := fsmStates[startState]; !ok {
+	fsm.addStates(states)
+
+	if _, ok := fsm.states[startState]; !ok {
 		return nil, errors.New("'startState' must be a subset of 'states'")
 	}
-	fmsFinalStates := make(map[State]struct{}, len(finalStates))
-	for _, finalState := range finalStates {
-		if _, ok := fsmStates[finalState]; !ok {
-			return nil, errors.New("'finalStates' must be a subset of 'states'")
-		}
-		fmsFinalStates[finalState] = struct{}{}
+	fsm.currentState = startState
+	if err := fsm.addFinalStates(finalStates); err != nil {
+		return nil, err
+	}
+	if err := fsm.addTransitions(transitions); err != nil {
+		return nil, err
 	}
 
-	return &fsm{
-		alphabet:     alphabet,
-		states:       fsmStates,
-		currentState: startState,
-		finalStates:  fmsFinalStates,
-		transitions:  map[State]map[Input]State{},
-	}, nil
-
+	return fsm, nil
 }
 
 type fsm struct {
@@ -38,32 +32,6 @@ type fsm struct {
 	states       map[State]struct{}
 	finalStates  map[State]struct{}
 	transitions  map[State]map[Input]State
-}
-
-func (fsm *fsm) AddTransition(startState State, input Input, endState State) error {
-	if err := fsm.validateTransition(startState, input, endState); err != nil {
-		return errors.Wrap(err, "invalid transition")
-	}
-
-	if _, ok := fsm.transitions[startState]; !ok {
-		fsm.transitions[startState] = map[Input]State{}
-	}
-
-	fsm.transitions[startState][input] = endState
-	return nil
-}
-
-func (fsm *fsm) validateTransition(startState State, input Input, endState State) error {
-	if _, valid := fsm.states[startState]; !valid {
-		return errors.New("startState not within states")
-	}
-	if !fsm.alphabet.Valid(input) {
-		return errors.New("input not within alphabet")
-	}
-	if _, valid := fsm.states[endState]; !valid {
-		return errors.New("endState not within states")
-	}
-	return nil
 }
 
 func (fsm *fsm) Inputs(inputs ...Input) (bool, error) {
@@ -92,4 +60,59 @@ func (fsm *fsm) Input(input Input) (State, error) {
 func (fsm *fsm) IsInFinalState() bool {
 	_, finalState := fsm.finalStates[fsm.currentState]
 	return finalState
+}
+
+func (fsm *fsm) addStates(states []State){
+	fsm.states = make(map[State]struct{}, len(states))
+	for _, state := range states {
+		fsm.states[state] = struct{}{}
+	}
+}
+
+func (fsm *fsm) addFinalStates(finalStates []State) error {
+	fsm.finalStates = make(map[State]struct{}, len(finalStates))
+	for _, finalState := range finalStates {
+		if _, ok := fsm.states[finalState]; !ok {
+			return errors.New("'finalStates' must be a subset of 'states'")
+		}
+		fsm.finalStates[finalState] = struct{}{}
+	}
+	return nil
+}
+
+func (fsm *fsm) addTransitions(transitions []Transition) error {
+	fsm.transitions = map[State]map[Input]State{}
+	for _, transition := range transitions {
+		err := fsm.addTransition(transition)
+		if err !=  nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (fsm *fsm) addTransition(transition Transition) error {
+	if err := fsm.validateTransition(transition); err != nil {
+		return errors.Wrap(err, "invalid transition")
+	}
+
+	if _, ok := fsm.transitions[transition.StartState()]; !ok {
+		fsm.transitions[transition.StartState()] = map[Input]State{}
+	}
+
+	fsm.transitions[transition.StartState()][transition.Input()] = transition.EndState()
+	return nil
+}
+
+func (fsm *fsm) validateTransition(transition Transition) error {
+	if _, valid := fsm.states[transition.StartState()]; !valid {
+		return errors.New("startState not within states")
+	}
+	if !fsm.alphabet.Valid(transition.Input()) {
+		return errors.New("input not within alphabet")
+	}
+	if _, valid := fsm.states[transition.EndState()]; !valid {
+		return errors.New("endState not within states")
+	}
+	return nil
 }

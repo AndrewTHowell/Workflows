@@ -1,13 +1,13 @@
 package Workflows
 
+type State interface {
+	String() string
+}
+
 func NewState(id string) State {
 	return &state{
 		id: id,
 	}
-}
-
-type State interface {
-	String() string
 }
 
 type state struct {
