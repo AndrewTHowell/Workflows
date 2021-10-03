@@ -6,13 +6,13 @@ import (
 	"Workflows/Workflows"
 )
 
-// TODO: state events, draw FSM diagrams
+// TODO: state events, draw FSM diagrams, global context, state context
 
 func main() {
 	alphabet := Workflows.NewAlphabet('a', 'b')
 
-	stateA := Workflows.NewState("hello there")
-	stateB := Workflows.NewState("general kenobi!")
+	stateA := Workflows.NewState("hello there", func(){fmt.Println("entering ht")}, func(){fmt.Println("exiting ht")})
+	stateB := Workflows.NewState("general kenobi!", func(){fmt.Println("entering gk")}, func(){fmt.Println("exiting gk")})
 	states := []Workflows.State{stateA, stateB}
 
 	transitions := []Workflows.Transition{

@@ -21,17 +21,17 @@ func NewFSM(alphabet Alphabet, states []State, startState State, finalStates []S
 		alphabet: alphabet,
 	}
 	fsm.addStates(states)
-
-	if _, ok := fsm.states[startState]; !ok {
-		return nil, errors.New("'startState' must be a subset of 'states'")
-	}
-	fsm.currentState = startState
 	if err := fsm.addFinalStates(finalStates); err != nil {
 		return nil, err
 	}
 	if err := fsm.addTransitions(transitions); err != nil {
 		return nil, err
 	}
+
+	if _, ok := fsm.states[startState]; !ok {
+		return nil, errors.New("'startState' must be a subset of 'states'")
+	}
+	fsm.setNewState(startState)
 
 	return fsm, nil
 }
@@ -63,9 +63,20 @@ func (fsm *fsm) Input(input Input) (State, error) {
 		return nil, errors.New("invalid input: invalid transition for current state")
 	}
 	nextStateIndex := rand.Intn(len(nextStates))
-	fsm.currentState = nextStates[nextStateIndex]
+	nextState := nextStates[nextStateIndex]
 
+	fsm.setNewState(nextState)
 	return fsm.currentState, nil
+}
+
+func (fsm *fsm) setNewState(newState State) {
+	// Only run exit event if current state is non-empty. Avoids panic on setting first state
+	if fsm.currentState != nil {
+		fsm.currentState.RunExitEvent()
+	}
+	fsm.currentState = newState
+	fsm.currentState.RunEntryEvent()
+	fmt.Println("> Current State: ", fsm.currentState)
 }
 
 func (fsm *fsm) IsInFinalState() bool {
