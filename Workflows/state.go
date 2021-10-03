@@ -6,9 +6,10 @@ type State interface {
 	String() string
 }
 
-func NewState(id string, entryEvent, exitEvent func()) State {
+func NewState(id, name string, entryEvent, exitEvent func()) State {
 	return &state{
 		id:         id,
+		name:       name,
 		entryEvent: entryEvent,
 		exitEvent:  exitEvent,
 	}
@@ -16,6 +17,7 @@ func NewState(id string, entryEvent, exitEvent func()) State {
 
 type state struct {
 	id         string
+	name       string
 	entryEvent func()
 	exitEvent  func()
 }
@@ -29,5 +31,5 @@ func (s *state) RunExitEvent() {
 }
 
 func (s *state) String() string {
-	return s.id
+	return s.name
 }

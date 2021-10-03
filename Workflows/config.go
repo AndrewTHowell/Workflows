@@ -1,31 +1,35 @@
 package Workflows
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type Config struct {
-	Alphabet []Input
-	States []StateConfig
+	Alphabet    []Input
+	States      []StateConfig
 	Transitions []TransitionConfig
 }
 
 type StateConfig struct {
-	ID string
+	ID         string
+	Name       string
 	StartState bool
 	FinalState bool
 	EntryEvent func()
-	ExitEvent func()
+	ExitEvent  func()
 }
 
 type TransitionConfig struct {
 	StartStateID string
-	Input Input
-	EndStateID string
+	Input        Input
+	EndStateID   string
 }
 
 type config struct {
-	alphabet Alphabet
-	startState State
-	states []State
+	alphabet    Alphabet
+	startState  State
+	states      []State
 	finalStates []State
 	transitions []Transition
 }
@@ -59,7 +63,7 @@ func (c *config) parseStateConfigs(stateConfigs []StateConfig) map[string]State 
 }
 
 func (c *config) parseStateConfig(stateConfig StateConfig) (string, State) {
-	state := NewState(stateConfig.ID, stateConfig.EntryEvent, stateConfig.ExitEvent)
+	state := NewState(stateConfig.ID, stateConfig.Name, stateConfig.EntryEvent, stateConfig.ExitEvent)
 	if stateConfig.StartState {
 		c.startState = state
 	}
@@ -82,14 +86,14 @@ func (c *config) parseTransitionConfigs(transitionConfigs []TransitionConfig, va
 func (c *config) parseTransitionConfig(transitionConfig TransitionConfig, validStateIDs map[string]State) error {
 	startState, ok := validStateIDs[transitionConfig.StartStateID]
 	if !ok {
-		return errors.New("invalid transition: StartStateID does not exist")
+		return errors.New(fmt.Sprintf("invalid transition: StartStateID <%v> does not exist", transitionConfig.StartStateID))
 	}
 	endState, ok := validStateIDs[transitionConfig.EndStateID]
 	if !ok {
-		return errors.New("invalid transition: EndStateID does not exist")
+		return errors.New(fmt.Sprintf("invalid transition: EndStateID <%v> does not exist", transitionConfig.EndStateID))
 	}
 	if !c.alphabet.Valid(transitionConfig.Input) {
-		return errors.New("invalid transition: Input not in Alphabet")
+		return errors.New(fmt.Sprintf("invalid transition: Input <%v> not in Alphabet", transitionConfig.Input))
 	}
 	c.transitions = append(c.transitions, NewTransition(startState, transitionConfig.Input, endState))
 	return nil

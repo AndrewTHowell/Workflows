@@ -88,7 +88,7 @@ func (fsm *fsm) setStartState(newState State) error {
 func (fsm *fsm) setNewState(newState State) {
 	fsm.currentState = newState
 	fsm.currentState.RunEntryEvent()
-	fmt.Println("> Current State: ", fsm.currentState)
+	fmt.Println("> Current State:", fsm.currentState)
 }
 
 func (fsm *fsm) IsInFinalState() bool {

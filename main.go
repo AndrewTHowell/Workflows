@@ -6,35 +6,37 @@ import (
 	"Workflows/Workflows"
 )
 
-// TODO: global context, state context
+// TODO: global context, state context, better error messages, refactor fsm.go to reduce complexity, all validation in parse...()
 
 func main() {
 	config := &Workflows.Config{
 		Alphabet: []Workflows.Input{'a', 'b'},
 		States: []Workflows.StateConfig{
 			{
-				ID: "hello there",
+				ID:         "A",
+				Name:       "State A",
 				StartState: true,
-				EntryEvent: func() { fmt.Println("entering ht") },
-				ExitEvent: func() { fmt.Println("exiting ht") },
+				EntryEvent: func() { fmt.Println("entering A") },
+				ExitEvent:  func() { fmt.Println("exiting A") },
 			},
 			{
-				ID: "general kenobi!",
+				ID:         "B",
+				Name:       "State B",
 				FinalState: true,
-				EntryEvent: func() { fmt.Println("entering gk") },
-				ExitEvent: func() { fmt.Println("exiting gk") },
+				EntryEvent: func() { fmt.Println("entering B") },
+				ExitEvent:  func() { fmt.Println("exiting B") },
 			},
 		},
 		Transitions: []Workflows.TransitionConfig{
 			{
-				StartStateID: "hello there",
-				Input: 'a',
-				EndStateID: "general kenobi!",
+				StartStateID: "A",
+				Input:        'a',
+				EndStateID:   "B",
 			},
 			{
-				StartStateID: "general kenobi!",
-				Input: 'b',
-				EndStateID: "general kenobi!",
+				StartStateID: "B",
+				Input:        'b',
+				EndStateID:   "B",
 			},
 		},
 	}
