@@ -8,16 +8,16 @@ type State interface {
 
 func NewState(id string, entryEvent, exitEvent func()) State {
 	return &state{
-		id: id,
+		id:         id,
 		entryEvent: entryEvent,
-		exitEvent: exitEvent,
+		exitEvent:  exitEvent,
 	}
 }
 
 type state struct {
-	id string
+	id         string
 	entryEvent func()
-	exitEvent func()
+	exitEvent  func()
 }
 
 func (s *state) RunEntryEvent() {
