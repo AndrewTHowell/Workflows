@@ -9,15 +9,15 @@ type Transition interface {
 func NewTransition(startState State, input Input, endState State) Transition {
 	return &transition{
 		startState: startState,
-		input: input,
-		endState: endState,
+		input:      input,
+		endState:   endState,
 	}
 }
 
 type transition struct {
 	startState State
-	input Input
-	endState State
+	input      Input
+	endState   State
 }
 
 func (t *transition) StartState() State {

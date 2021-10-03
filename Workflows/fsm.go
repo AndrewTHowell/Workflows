@@ -2,11 +2,15 @@ package Workflows
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/pkg/errors"
 )
 
 func NewFSM(alphabet Alphabet, states []State, startState State, finalStates []State, transitions []Transition) (*fsm, error) {
+	rand.Seed(time.Now().Unix())
+
 	fsm := &fsm{
 		alphabet: alphabet,
 	}
@@ -31,7 +35,7 @@ type fsm struct {
 	currentState State
 	states       map[State]struct{}
 	finalStates  map[State]struct{}
-	transitions  map[State]map[Input]State
+	transitions  map[State]map[Input][]State
 }
 
 func (fsm *fsm) Inputs(inputs ...Input) (bool, error) {
@@ -48,12 +52,13 @@ func (fsm *fsm) Input(input Input) (State, error) {
 		return nil, errors.New("invalid input: not within alphabet")
 	}
 
-	nextState, valid := fsm.transitions[fsm.currentState][input]
+	nextStates, valid := fsm.transitions[fsm.currentState][input]
 	if !valid {
 		return nil, errors.New("invalid input: invalid transition for current state")
 	}
+	nextStateIndex := rand.Intn(len(nextStates))
+	fsm.currentState = nextStates[nextStateIndex]
 
-	fsm.currentState = nextState
 	return fsm.currentState, nil
 }
 
@@ -62,7 +67,7 @@ func (fsm *fsm) IsInFinalState() bool {
 	return finalState
 }
 
-func (fsm *fsm) addStates(states []State){
+func (fsm *fsm) addStates(states []State) {
 	fsm.states = make(map[State]struct{}, len(states))
 	for _, state := range states {
 		fsm.states[state] = struct{}{}
@@ -81,10 +86,10 @@ func (fsm *fsm) addFinalStates(finalStates []State) error {
 }
 
 func (fsm *fsm) addTransitions(transitions []Transition) error {
-	fsm.transitions = map[State]map[Input]State{}
+	fsm.transitions = map[State]map[Input][]State{}
 	for _, transition := range transitions {
 		err := fsm.addTransition(transition)
-		if err !=  nil {
+		if err != nil {
 			return err
 		}
 	}
@@ -97,10 +102,12 @@ func (fsm *fsm) addTransition(transition Transition) error {
 	}
 
 	if _, ok := fsm.transitions[transition.StartState()]; !ok {
-		fsm.transitions[transition.StartState()] = map[Input]State{}
+		fsm.transitions[transition.StartState()] = map[Input][]State{}
 	}
 
-	fsm.transitions[transition.StartState()][transition.Input()] = transition.EndState()
+	endStates := fsm.transitions[transition.StartState()][transition.Input()]
+	endStates = append(endStates, transition.EndState())
+	fsm.transitions[transition.StartState()][transition.Input()] = endStates
 	return nil
 }
 
