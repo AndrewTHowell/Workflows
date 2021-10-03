@@ -8,7 +8,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-func NewFSM(alphabet Alphabet, states []State, startState State, finalStates []State, transitions []Transition) (*fsm, error) {
+type FSM interface {
+	Inputs(inputs ...Input) (bool, error)
+	Input(input Input) (State, error)
+	IsInFinalState() bool
+}
+
+func NewFSM(alphabet Alphabet, states []State, startState State, finalStates []State, transitions []Transition) (FSM, error) {
 	rand.Seed(time.Now().Unix())
 
 	fsm := &fsm{

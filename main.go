@@ -16,8 +16,8 @@ func main() {
 	states := []Workflows.State{stateA, stateB}
 
 	transitions := []Workflows.Transition{
-		Workflows.NewTransition(stateA, 'a', stateA),
 		Workflows.NewTransition(stateA, 'a', stateB),
+		Workflows.NewTransition(stateB, 'b', stateB),
 	}
 
 	fsm, err := Workflows.NewFSM(alphabet, states, stateA, []Workflows.State{stateB}, transitions)
@@ -25,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	final, err := fsm.Inputs('a')
+	final, err := fsm.Inputs('a', 'b')
 	if err != nil {
 		panic(err)
 	}
