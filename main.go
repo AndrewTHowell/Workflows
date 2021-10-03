@@ -6,21 +6,39 @@ import (
 	"Workflows/Workflows"
 )
 
-// TODO: raw FSM diagrams, global context, state context
+// TODO: global context, state context
 
 func main() {
-	alphabet := Workflows.NewAlphabet('a', 'b')
-
-	stateA := Workflows.NewState("hello there", func() { fmt.Println("entering ht") }, func() { fmt.Println("exiting ht") })
-	stateB := Workflows.NewState("general kenobi!", func() { fmt.Println("entering gk") }, func() { fmt.Println("exiting gk") })
-	states := []Workflows.State{stateA, stateB}
-
-	transitions := []Workflows.Transition{
-		Workflows.NewTransition(stateA, 'a', stateB),
-		Workflows.NewTransition(stateB, 'b', stateB),
+	config := &Workflows.Config{
+		Alphabet: []Workflows.Input{'a', 'b'},
+		States: []Workflows.StateConfig{
+			{
+				ID: "hello there",
+				StartState: true,
+				EntryEvent: func() { fmt.Println("entering ht") },
+				ExitEvent: func() { fmt.Println("exiting ht") },
+			},
+			{
+				ID: "general kenobi!",
+				FinalState: true,
+				EntryEvent: func() { fmt.Println("entering gk") },
+				ExitEvent: func() { fmt.Println("exiting gk") },
+			},
+		},
+		Transitions: []Workflows.TransitionConfig{
+			{
+				StartStateID: "hello there",
+				Input: 'a',
+				EndStateID: "general kenobi!",
+			},
+			{
+				StartStateID: "general kenobi!",
+				Input: 'b',
+				EndStateID: "general kenobi!",
+			},
+		},
 	}
-
-	fsm, err := Workflows.NewFSM(alphabet, states, stateA, []Workflows.State{stateB}, transitions)
+	fsm, err := Workflows.NewFSM(config)
 	if err != nil {
 		panic(err)
 	}

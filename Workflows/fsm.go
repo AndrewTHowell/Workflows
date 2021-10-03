@@ -14,24 +14,31 @@ type FSM interface {
 	IsInFinalState() bool
 }
 
-func NewFSM(alphabet Alphabet, states []State, startState State, finalStates []State, transitions []Transition) (FSM, error) {
+func NewFSM(fsmConfig *Config) (FSM, error) {
 	rand.Seed(time.Now().Unix())
 
-	fsm := &fsm{
-		alphabet: alphabet,
-	}
-	fsm.addStates(states)
-	if err := fsm.addFinalStates(finalStates); err != nil {
-		return nil, err
-	}
-	if err := fsm.addTransitions(transitions); err != nil {
+	config, err := parseConfig(fsmConfig)
+	if err != nil {
 		return nil, err
 	}
 
-	if _, ok := fsm.states[startState]; !ok {
-		return nil, errors.New("'startState' must be a subset of 'states'")
+	return newFSM(config)
+}
+
+func newFSM(config *config) (FSM, error) {
+	fsm := &fsm{
+		alphabet: config.alphabet,
 	}
-	fsm.setNewState(startState)
+	fsm.addStates(config.states)
+	if err := fsm.addFinalStates(config.finalStates); err != nil {
+		return nil, err
+	}
+	if err := fsm.addTransitions(config.transitions); err != nil {
+		return nil, err
+	}
+	if err := fsm.setStartState(config.startState); err != nil {
+		return nil, err
+	}
 
 	return fsm, nil
 }
@@ -65,15 +72,20 @@ func (fsm *fsm) Input(input Input) (State, error) {
 	nextStateIndex := rand.Intn(len(nextStates))
 	nextState := nextStates[nextStateIndex]
 
+	fsm.currentState.RunExitEvent()
 	fsm.setNewState(nextState)
 	return fsm.currentState, nil
 }
 
-func (fsm *fsm) setNewState(newState State) {
-	// Only run exit event if current state is non-empty. Avoids panic on setting first state
-	if fsm.currentState != nil {
-		fsm.currentState.RunExitEvent()
+func (fsm *fsm) setStartState(newState State) error {
+	if _, ok := fsm.states[newState]; !ok {
+		return errors.New("'startState' must be a subset of 'states'")
 	}
+	fsm.setNewState(newState)
+	return nil
+}
+
+func (fsm *fsm) setNewState(newState State) {
 	fsm.currentState = newState
 	fsm.currentState.RunEntryEvent()
 	fmt.Println("> Current State: ", fsm.currentState)
